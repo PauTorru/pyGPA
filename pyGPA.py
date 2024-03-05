@@ -10,6 +10,12 @@ import scipy.optimize
 
 
 def select_spots(im):
+	r"""Select spots for gpa.
+	Parmaters:
+	----------
+	im : hs.signals.Signal2D
+	High resolution image suitable for GPA.
+	"""
 
 	fft = np.fft.fftshift(np.fft.fft2(im.data))
 	psd = np.abs(fft)**2
@@ -23,14 +29,17 @@ def select_spots(im):
 	c1.interactive(im_fft,color="red")
 	c2.interactive(im_fft,color="red")
 
-	""""pos = hs.interactive(param(c1,c2),
-										event=[c1.events.changed,c2.events.changed],
-										recompute_out_event=None)"""
 	return c1,c2
 
 
 
 def select_reference_roi(im):
+	r"""Select reference region for gpa.
+	Parmaters:
+	----------
+	im : hs.signals.Signal2D
+	High resolution image suitable for GPA.
+	"""
 	rf = hs.roi.RectangularROI()
 	im_nocal = hs.signals.Signal2D(im.data)
 	im_nocal.plot()
