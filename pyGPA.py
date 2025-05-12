@@ -47,7 +47,7 @@ def select_reference_roi(im):
 	return rf
 
 
-def GPA(image,positions,reference,sigma = 2):
+def GPA(image,positions,reference,sigma = 2,min_method='Nelder-Mead',gs=None):
 	r"""retruns e_xx e_yy shear and rotation"""
 
 	if all([isinstance(p,hs.roi.CircleROI) for p in positions]):
@@ -84,18 +84,21 @@ def GPA(image,positions,reference,sigma = 2):
 		invfftamp = np.abs(invfft)
 		invfftpha = np.angle(invfft)
 
-		phacut = invfftpha[fi:ff,ci:cf]
-		xs = np.arange(ci,cf)
-		ys = np.arange(fi,ff)
-		xx,yy = np.meshgrid(xs,ys)
+		if gs is None:
+			phacut = invfftpha[fi:ff,ci:cf]
+			xs = np.arange(ci,cf)
+			ys = np.arange(fi,ff)
+			xx,yy = np.meshgrid(xs,ys)
 
 
-		fun = lambda x: np.sum(np.unwrap(phacut - 2*np.pi*(x[0]*xx+x[1]*yy-x[2]),axis=i-1)**2)
-		opt = scipy.optimize.minimize(fun,[0,0,0],method = 'Nelder-Mead')
+			fun = lambda x: np.sum(np.unwrap(phacut - 2*np.pi*(x[0]*xx+x[1]*yy-x[2]),axis=i-1)**2)
+			opt = scipy.optimize.minimize(fun,[0,0,0],method = min_method)
 
-		gx = opt.x[0]
-		gy = opt.x[1]
-		gc = opt.x[2]
+			gx = opt.x[0]
+			gy = opt.x[1]
+			gc = opt.x[2]
+		else:
+			gx,gy,gc = gs
 
 		xs = np.arange(invfftpha.shape[1])
 		ys = np.arange(invfftpha.shape[0])
@@ -125,7 +128,7 @@ def GPA(image,positions,reference,sigma = 2):
 	Shear = 0.5*(ematrix[1,0,:,:]+ematrix[0,1,:,:])
 	Rotation = np.rad2deg(np.arcsin(0.5*(ematrix[1,0,:,:]-ematrix[0,1,:,:])))
 
-	return (In_plain_strain, Out_plain_strain, Shear, Rotation)
+	return (In_plain_strain, Out_plain_strain, Shear, Rotation),(gx,gy,gc)
 
 
 def chop_outliers(im,bins = 100,remove =1):
